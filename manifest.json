@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Cookie Monster",
+  "version": "1.0",
+  "description": "View cookies for the current website and has logic built in to find session cookiesIt can also copy all cookies to clipboard.",
+  "permissions": [
+    "cookies",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+} 
