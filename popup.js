@@ -19,12 +19,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Display current domain
     document.getElementById('current-domain').textContent = domain;
     
-    // Get cookies using Promise wrapper
-    const cookies = await chrome.cookies.getAll({ domain: domain });
+    // Get cookies for the exact domain
+    const exactDomainCookies = await chrome.cookies.getAll({ domain: domain });
+    
+    // Get cookies that start with a dot (wildcard cookies)
+    const wildcardCookies = await chrome.cookies.getAll({ domain: '.' + domain });
+    
+    // Combine and remove duplicates
+    const allCookies = [...exactDomainCookies, ...wildcardCookies];
+    const uniqueCookies = [...new Map(allCookies.map(c => 
+      [`${c.domain}:${c.path}:${c.name}`, c]
+    )).values()];
 
     const cookieList = document.getElementById('cookie-list');
     
-    if (!cookies?.length) {
+    if (!uniqueCookies?.length) {
       cookieList.innerHTML = '<div class="no-cookies">No cookies found for this domain</div>';
       return;
     }
@@ -36,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const fragment = document.createDocumentFragment();
     
     // Sort and display cookies
-    cookies
+    uniqueCookies
       .sort((a, b) => {
         // First compare by session status
         const aIsSession = isLikelySessionCookie(a);
