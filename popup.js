@@ -19,15 +19,40 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Display current domain
     document.getElementById('current-domain').textContent = domain;
     
-    // Get cookies for the exact domain
-    const exactDomainCookies = await chrome.cookies.getAll({ domain: domain });
+    // Get all possible domain combinations
+    const domainParts = domain.split('.');
+    const domains = [];
     
-    // Get cookies that start with a dot (wildcard cookies)
-    const wildcardCookies = await chrome.cookies.getAll({ domain: '.' + domain });
+    // Add the exact domain first
+    domains.push(domain);
     
-    // Combine and remove duplicates
-    const allCookies = [...exactDomainCookies, ...wildcardCookies];
-    const uniqueCookies = [...new Map(allCookies.map(c => 
+    // Add all possible parent domains with leading dot
+    // Stop before the last two parts (e.g., don't include '.com' for 'example.com')
+    for (let i = 0; i < domainParts.length - 2; i++) {
+      const parentDomain = '.' + domainParts.slice(i + 1).join('.');
+      domains.push(parentDomain);
+    }
+    
+    // Get cookies for all relevant domains
+    const allCookies = (await Promise.all(
+      domains.map(d => chrome.cookies.getAll({ domain: d }))
+    )).flat();
+    
+    // Filter cookies to only include those that would apply to our domain
+    const applicableCookies = allCookies.filter(cookie => {
+      // Exact domain match
+      if (cookie.domain === domain) return true;
+      
+      // Wildcard domain match (cookie domain must be a suffix of current domain)
+      if (cookie.domain.startsWith('.')) {
+        return domain.endsWith(cookie.domain.slice(1));
+      }
+      
+      return false;
+    });
+    
+    // Remove duplicates
+    const uniqueCookies = [...new Map(applicableCookies.map(c => 
       [`${c.domain}:${c.path}:${c.name}`, c]
     )).values()];
 
